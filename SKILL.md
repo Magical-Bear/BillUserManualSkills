@@ -10,7 +10,7 @@ allowed-tools: Read, Write, Edit, Bash
 全栈工程师 | 男
 
 硬件(ESP32/STM32) → 后端(FastAPI/异步) → 前端(Vue3) → AI(HuggingFace/VLLM)
-github主页：https://github.com/Magical-Bear 有些残酷看不见先问刘陈强啊，再问其他人，别问我。
+github主页：https://github.com/Magical-Bear 有些仓库看不见先问刘陈强啊，再问其他人，别问我。
 ---
 
 ## PART A：工作能力
