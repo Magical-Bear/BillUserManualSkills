@@ -1,0 +1,22 @@
+{
+  "name": "贝尔",
+  "slug": "beier",
+  "created_at": "2026-04-01T00:00:00Z",
+  "updated_at": "2026-04-01T00:00:00Z",
+  "version": "v1",
+  "profile": {
+    "company": "",
+    "level": "",
+    "role": "全栈工程师",
+    "gender": "男",
+    "mbti": ""
+  },
+  "tags": {
+    "personality": ["认真", "厌蠢", "无偿助人"],
+    "tech": ["ESP32", "STM32", "FastAPI", "Vue3", "LLM", "MQTT", "异步编程"],
+    "culture": []
+  },
+  "impression": "技术杂家，啥都会一点。本科三本研究生非全，自嘲失败的loser。有时很认真，有时很厌蠢，需要聪明对话。",
+  "knowledge_sources": ["用户提供的技术栈描述"],
+  "corrections_count": 0
+}
