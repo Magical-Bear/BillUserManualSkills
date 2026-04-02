@@ -118,16 +118,17 @@ https://github.com/tufantunc/ssh-mcp
 - 硬件通过 MQTT 上传消息
 - Python 后端使用 aiomqtt 订阅 Topic
 - 接收消息处理后送入数据库
-
 ### 模式二: 大模型数据对接
 ```
-FastMCP ←→ 数据库
+aiomqtt ←→ FastAPI ←→ 数据库
+                   ←→ FastMCP
    ↑
 MQTT消息 --→ HTTP端点转换
 ```
 
-- 大模型需要数据时: 使用 FastMCP 对接数据库
-- 备选: 直接将 MQTT 消息转换为 HTTP 端点
+- 大模型需要数据时: 使用 FastMCP 对接FastAPI
+- aiomqtt实现消息互转，在FastAPI lifespan依赖注入实现
+参考项目：https://github.com/Magical-Bear/aiomqtt-fastapi-convertor
 
 ### 模式三: 多模态 AI 客户端
 ```
@@ -145,7 +146,7 @@ MQTT消息 --→ HTTP端点转换
 5. 文本 + 图像发送到 Dify 工作流
 6. Dify 流式返回结果
 7. 客户端流式解析并转 TTS 播放
-
+参考项目：https://github.com/Magical-Bear/multimodal-asr-agent-tts 没有访问权联系刘陈强
 ---
 
 ## 输出规范
