@@ -58,18 +58,22 @@
 ### 基础环境
 - **Python 版本**: 3.11+（使用新特性）
 - **版本管理优先级**:
-  1. UV（优先检查）
+  1. UV（优先检查, 且优先uv add packages）
   2. Conda（备选）
+- **配置管理**：.env配置url, api-key, db_user, db_password等，代码内部严禁写静态url，无论代码结构如何.env始终位于项目根目录，且你只需要创建.env.example 并复制为.env，严禁读取.env除非用户允许。
 
 ### 核心框架
 - **Web 框架**: FastAPI（所有 Web 项目强制使用）
 - **架构模式**: 全异步结构
 - **关键特性**:
+  - 使用from fastmcp import fastmcp，优先streamable-http模式
   - 使用 `asyncio` 构建
   - 使用 `context manager` 管理异步资源
   - 使用 FastAPI `lifespan` 进行依赖注入管理
   - 使用 `Pydantic v2` 数据校验
   - 如果需要用户身份鉴权，请使用OAuth2 + JWT校验。除注册，登陆外，身份验证使用异步Depends依赖注入。必须向用户明确是需要Bearer api-key还是jwt鉴权
+  - 当涉及langchain时，请优先查询文档后再开发，文档地址`https://docs.langchain.com/oss/python/langchain/agents`, 特别是langchain 1.0 重构了agent创建方式，必须仔细核验
+
 
 ### 异步 HTTP 请求
 - **强制使用**: `aiohttp`
