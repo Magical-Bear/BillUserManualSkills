@@ -1,103 +1,60 @@
 #!/usr/bin/env python3
-"""Validate Doctor Bill user-level installation artifacts.
-
-This checks installed files under Codex/Claude/Cursor user paths. It does not
-exercise runtime agent behavior and is not a replacement for independent tests.
-"""
+"""Validate installed Doctor Bill Skills and user-level entry files."""
 from __future__ import annotations
 
 import argparse
+import hashlib
+from pathlib import Path
 import re
 import sys
-from pathlib import Path
-from typing import Optional
 
-SKILLS = [
-    "doctor-bill",
-    "doctor-bill-software",
-    "doctor-bill-hardware",
-    "doctor-bill-ai",
-    "doctor-bill-ops",
-]
-
-BLOCK_BEGIN = "<!-- DOCTOR-BILL:BEGIN -->"
-BLOCK_END = "<!-- DOCTOR-BILL:END -->"
+ROOT = Path(__file__).resolve().parents[1]
+SKILLS = ["doctor-bill", "doctor-bill-software", "doctor-bill-hardware", "doctor-bill-ai", "doctor-bill-ops"]
 
 
-def read_text(path: Path) -> str:
-    return path.read_text(encoding="utf-8")
+def digest(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def frontmatter_name(path: Path) -> Optional[str]:
-    text = read_text(path)
-    if not text.startswith("---\n"):
-        return None
-    end = text.find("\n---\n", 4)
-    if end == -1:
-        return None
-    raw = text[4:end]
-    for line in raw.splitlines():
-        if line.strip().startswith("name:"):
-            return line.split(":", 1)[1].strip().strip('"').strip("'")
-    return None
-
-
-def check_skill_dir(skills_dir: Path, errors: list[str]) -> None:
-    for skill in SKILLS:
-        base = skills_dir / skill
-        if not base.is_dir():
-            errors.append(f"missing installed skill directory: {base}")
+def check_skill_set(skills_dir: Path, errors: list[str]) -> None:
+    for name in SKILLS:
+        target = skills_dir / name / "SKILL.md"
+        source = ROOT / "SKILL.md" if name == "doctor-bill" else ROOT / "skills" / name / "SKILL.md"
+        if not target.is_file():
+            errors.append(f"missing installed Skill: {target}")
             continue
-        skill_md = base / "SKILL.md"
-        openai = base / "agents/openai.yaml"
-        if not skill_md.exists():
-            errors.append(f"missing installed SKILL.md: {skill_md}")
-        elif frontmatter_name(skill_md) != skill:
-            errors.append(f"{skill_md}: frontmatter name mismatch, expected {skill}")
-        if not openai.exists():
-            errors.append(f"missing installed openai.yaml: {openai}")
-        else:
-            text = read_text(openai)
-            if f"${skill}" not in text:
-                errors.append(f"{openai}: default prompt must mention ${skill}")
-
-    root_skill = skills_dir / "doctor-bill"
-    for rel in ["persona.md", "work.md", "agents/developer.md", "agents/tester.md", "references/skill-routing.md"]:
-        if not (root_skill / rel).exists():
-            errors.append(f"missing root skill artifact: {root_skill / rel}")
+        if digest(target) != digest(source):
+            errors.append(f"installed Skill differs from source: {target}")
+        yaml = skills_dir / name / "agents" / "openai.yaml"
+        if not yaml.is_file():
+            errors.append(f"missing installed metadata: {yaml}")
+        for forbidden in ["work.md", "references", "agents/developer.md", "agents/tester.md"]:
+            if (skills_dir / name / forbidden).exists():
+                errors.append(f"fragmented rule artifact installed: {skills_dir / name / forbidden}")
+    root_persona = skills_dir / "doctor-bill" / "persona.md"
+    if not root_persona.is_file():
+        errors.append(f"missing preserved persona: {root_persona}")
+    for relative in [
+        "assets/systemd/doctor-bill-system.service",
+        "assets/systemd/doctor-bill-user.service",
+        "assets/github/deploy-main.yml",
+        "assets/deploy/deploy.sh",
+    ]:
+        path = skills_dir / "doctor-bill-ops" / relative
+        if not path.is_file():
+            errors.append(f"missing installed ops asset: {path}")
 
 
 def check_marked_file(path: Path, errors: list[str]) -> None:
-    if not path.exists():
-        errors.append(f"missing adapter entry: {path}")
+    if not path.is_file():
+        errors.append(f"missing entry file: {path}")
         return
-    text = read_text(path)
-    if BLOCK_BEGIN not in text or BLOCK_END not in text:
-        errors.append(f"{path}: missing DOCTOR-BILL marked block")
-    if "doctor-bill" not in text or "super_bill" not in text:
-        errors.append(f"{path}: missing doctor-bill/super_bill routing text")
-
-
-def validate_codex(home: Path, errors: list[str]) -> None:
-    check_skill_dir(home / "skills", errors)
-    check_marked_file(home / "AGENTS.md", errors)
-
-
-def validate_claude(home: Path, errors: list[str]) -> None:
-    check_skill_dir(home / "skills", errors)
-    check_marked_file(home / "CLAUDE.md", errors)
-
-
-def validate_cursor(rules_dir: Path, errors: list[str]) -> None:
-    if not rules_dir.exists():
-        errors.append(f"Cursor rules dir does not exist: {rules_dir}")
-        return
-    target = rules_dir / "doctor-bill.mdc"
-    check_marked_file(target, errors)
-    if target.exists():
-        text = read_text(target)
-        if not re.search(r"^alwaysApply:\s*true\s*$", text, re.M):
-            errors.append(f"{target}: expected alwaysApply: true")
+    text = path.read_text(encoding="utf-8")
+    if text.count("<!-- DOCTOR-BILL:BEGIN -->") != 1 or text.count("<!-- DOCTOR-BILL:END -->") != 1:
+        errors.append(f"invalid Doctor Bill marked block: {path}")
+    for term in ["super_bill", "superpowers", "Context7", "ui-ux-pro-max-skill", "开发 Agent", "测试 Agent"]:
+        if term not in text:
+            errors.append(f"{path}: missing entry requirement {term!r}")
 
 
 def main() -> int:
@@ -105,24 +62,34 @@ def main() -> int:
     parser.add_argument("--platform", choices=["codex", "claude", "cursor", "all"], default="all")
     parser.add_argument("--codex-home", type=Path, default=Path.home() / ".codex")
     parser.add_argument("--claude-home", type=Path, default=Path.home() / ".claude")
+    parser.add_argument("--cursor-home", type=Path, default=Path.home() / ".cursor")
     parser.add_argument("--cursor-rules-dir", type=Path, default=None)
+    parser.add_argument("--cursor-skills-dir", type=Path, default=None)
     args = parser.parse_args()
 
     errors: list[str] = []
     if args.platform in {"codex", "all"}:
-        validate_codex(args.codex_home.expanduser(), errors)
+        check_skill_set(args.codex_home.expanduser() / "skills", errors)
+        check_marked_file(args.codex_home.expanduser() / "AGENTS.md", errors)
     if args.platform in {"claude", "all"}:
-        validate_claude(args.claude_home.expanduser(), errors)
+        check_skill_set(args.claude_home.expanduser() / "skills", errors)
+        check_marked_file(args.claude_home.expanduser() / "CLAUDE.md", errors)
     if args.platform in {"cursor", "all"}:
-        cursor_dir = args.cursor_rules_dir or (Path.home() / ".cursor/rules")
-        validate_cursor(cursor_dir.expanduser(), errors)
+        cursor_home = args.cursor_home.expanduser()
+        rules_dir = (args.cursor_rules_dir or cursor_home / "rules").expanduser()
+        skills_dir = (args.cursor_skills_dir or cursor_home / "skills").expanduser()
+        check_skill_set(skills_dir, errors)
+        mdc = rules_dir / "doctor-bill.mdc"
+        check_marked_file(mdc, errors)
+        if mdc.is_file() and not re.search(r"^alwaysApply:\s*true\s*$", mdc.read_text(encoding="utf-8"), re.M):
+            errors.append(f"{mdc}: expected alwaysApply: true")
 
     if errors:
         print("Doctor Bill install validation failed:", file=sys.stderr)
         for error in errors:
             print(f"- {error}", file=sys.stderr)
         return 1
-    print("Doctor Bill install validation passed")
+    print("Doctor Bill install validation passed: all five Skills and user-level entries match source")
     return 0
 
 

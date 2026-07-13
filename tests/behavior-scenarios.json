@@ -1,0 +1,63 @@
+[
+  {
+    "id": "yesterday-report",
+    "prompt": "帮我查看昨日数据报告，并做一个图表页面。",
+    "must_cover": [
+      "superpowers", "Context7", "ui-ux-pro-max-skill", "时区", "生产端", "桥梁层",
+      "原始数据", "API", "ECharts", "3 分钟", "20 个样本", "迟到", "重算"
+    ],
+    "files": ["SKILL.md", "skills/doctor-bill-software/SKILL.md"]
+  },
+  {
+    "id": "develop-and-test-api",
+    "prompt": "开发并测试这个 API。",
+    "must_cover": [
+      "非 `main` 分支", "开发 Agent", "测试 Agent", "只测试", "httpx.AsyncClient",
+      "真实运行服务", "禁止 mock", "用户验收"
+    ],
+    "files": ["SKILL.md", "skills/doctor-bill-software/SKILL.md"]
+  },
+  {
+    "id": "database-contract",
+    "prompt": "给新业务设计数据库。",
+    "must_cover": [
+      "SQLAlchemy 2.x ORM", "async_sessionmaker", "AsyncSession", "lifespan",
+      "开发数据库与测试数据库", "第三范式", "现有 MySQL", "用户明确指定"
+    ],
+    "files": ["SKILL.md", "skills/doctor-bill-software/SKILL.md"]
+  },
+  {
+    "id": "no-sudo-systemd",
+    "prompt": "服务器没有 sudo，配置开机自启。",
+    "must_cover": [
+      "systemctl --user", "~/.config/systemd/user", "Linger", "enable-linger",
+      "WantedBy=default.target", "健康检查", "journalctl"
+    ],
+    "files": ["skills/doctor-bill-ops/SKILL.md", "skills/doctor-bill-ops/assets/systemd/doctor-bill-user.service"]
+  },
+  {
+    "id": "main-push-deploy",
+    "prompt": "GitHub Actions 在 main push 后自动更新项目并重启。",
+    "must_cover": [
+      "main", "SSH Key", "known_hosts", "concurrency", "pull --ff-only", "uv sync --frozen",
+      "MIGRATION_COMMAND", "健康", "回滚", "工作树"
+    ],
+    "files": [
+      "skills/doctor-bill-ops/SKILL.md",
+      "skills/doctor-bill-ops/assets/github/deploy-main.yml",
+      "skills/doctor-bill-ops/assets/deploy/deploy.sh"
+    ]
+  },
+  {
+    "id": "domain-bypass",
+    "prompt": "直接使用 software Skill 写代码。",
+    "must_cover": ["doctor-bill", "不能绕过", "allow_implicit_invocation: false"],
+    "files": [
+      "skills/doctor-bill-software/SKILL.md",
+      "skills/doctor-bill-software/agents/openai.yaml",
+      "skills/doctor-bill-hardware/agents/openai.yaml",
+      "skills/doctor-bill-ai/agents/openai.yaml",
+      "skills/doctor-bill-ops/agents/openai.yaml"
+    ]
+  }
+]

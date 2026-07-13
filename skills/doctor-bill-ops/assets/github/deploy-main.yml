@@ -1,0 +1,61 @@
+name: Deploy main
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ github.repository }}-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout deployment assets
+        uses: actions/checkout@v4
+
+      - name: Configure SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/doctor_bill_deploy
+          chmod 600 ~/.ssh/doctor_bill_deploy
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Deploy and verify
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          APP_DIR: ${{ vars.APP_DIR }}
+          SERVICE_MODE: ${{ vars.SERVICE_MODE }}
+          SERVICE_NAME: ${{ vars.SERVICE_NAME }}
+          HEALTH_URL: ${{ vars.HEALTH_URL }}
+          HEALTH_ATTEMPTS: ${{ vars.HEALTH_ATTEMPTS }}
+          HEALTH_INTERVAL_SECONDS: ${{ vars.HEALTH_INTERVAL_SECONDS }}
+          MIGRATION_COMMAND: ${{ vars.MIGRATION_COMMAND }}
+        run: |
+          set -euo pipefail
+          : "${DEPLOY_HOST:?missing DEPLOY_HOST secret}"
+          : "${DEPLOY_USER:?missing DEPLOY_USER secret}"
+          : "${APP_DIR:?missing APP_DIR variable}"
+          : "${SERVICE_NAME:?missing SERVICE_NAME variable}"
+          : "${HEALTH_URL:?missing HEALTH_URL variable}"
+          DEPLOY_PORT="${DEPLOY_PORT:-22}"
+          SERVICE_MODE="${SERVICE_MODE:-user}"
+          HEALTH_ATTEMPTS="${HEALTH_ATTEMPTS:-12}"
+          HEALTH_INTERVAL_SECONDS="${HEALTH_INTERVAL_SECONDS:-5}"
+          ssh -i ~/.ssh/doctor_bill_deploy -p "$DEPLOY_PORT" \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "APP_DIR='$APP_DIR' SERVICE_MODE='$SERVICE_MODE' SERVICE_NAME='$SERVICE_NAME' HEALTH_URL='$HEALTH_URL' HEALTH_ATTEMPTS='$HEALTH_ATTEMPTS' HEALTH_INTERVAL_SECONDS='$HEALTH_INTERVAL_SECONDS' MIGRATION_COMMAND='$MIGRATION_COMMAND' bash -s" \
+            < skills/doctor-bill-ops/assets/deploy/deploy.sh

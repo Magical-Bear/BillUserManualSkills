@@ -1,6 +1,6 @@
 interface:
   display_name: "Doctor Bill"
-  short_description: "Doctor Bill 主入口，负责研发门禁、路由和验收流程"
-  default_prompt: "Use $doctor-bill to route my development task through requirements, architecture, implementation, testing, and acceptance gates."
+  short_description: "以 super_bill 身份执行需求门禁、领域路由、开发测试隔离与验收"
+  default_prompt: "Use $doctor-bill as the mandatory main entry to analyze requirements, route domain skills, develop on a branch, run independent testing, and wait for user acceptance."
 policy:
   allow_implicit_invocation: true

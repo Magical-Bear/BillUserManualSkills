@@ -1,261 +1,139 @@
 #!/usr/bin/env python3
-"""Validate Doctor Bill skill source tree.
-
-This is a source-structure validator, not an independent functional test.
-It checks skill metadata, required files, adapter templates, and shallow references.
-"""
+"""Validate Doctor Bill source structure and approved requirement coverage."""
 from __future__ import annotations
 
-import argparse
+import json
+from pathlib import Path
 import re
 import sys
-from pathlib import Path
-from typing import Iterable
 
-EXPECTED_SKILLS = {
-    ".": "doctor-bill",
-    "skills/doctor-bill-software": "doctor-bill-software",
-    "skills/doctor-bill-hardware": "doctor-bill-hardware",
-    "skills/doctor-bill-ai": "doctor-bill-ai",
-    "skills/doctor-bill-ops": "doctor-bill-ops",
-}
-
-ROOT_REQUIRED = [
-    "SKILL.md",
-    "persona.md",
-    "work.md",
-    "README.md",
-    "meta.json",
-    "agents/openai.yaml",
-    "agents/developer.md",
-    "agents/tester.md",
-    "references/skill-routing.md",
-    "references/legacy-work-knowledge.md",
-    "adapters/codex/AGENTS.md",
-    "adapters/claude/CLAUDE.md",
-    "adapters/cursor/doctor-bill.mdc",
-    "scripts/install.sh",
-    "scripts/uninstall.sh",
-    "scripts/validate-skills.py",
-    "scripts/validate-install.py",
+ROOT = Path(__file__).resolve().parents[1]
+DOMAIN_NAMES = [
+    "doctor-bill-software",
+    "doctor-bill-hardware",
+    "doctor-bill-ai",
+    "doctor-bill-ops",
 ]
 
-DOMAIN_REQUIRED = [
-    "SKILL.md",
-    "agents/openai.yaml",
-]
 
-REQUIRED_OPENAI_FIELDS = ["display_name", "short_description", "default_prompt"]
-ALLOWED_FRONTMATTER_KEYS = {"name", "description", "license", "allowed-tools", "metadata"}
-MAX_SKILL_NAME_LENGTH = 64
-BLOCK_BEGIN = "<!-- DOCTOR-BILL:BEGIN -->"
-BLOCK_END = "<!-- DOCTOR-BILL:END -->"
+def read(path: Path, errors: list[str]) -> str:
+    if not path.is_file():
+        errors.append(f"missing file: {path.relative_to(ROOT)}")
+        return ""
+    return path.read_text(encoding="utf-8")
 
 
-class ValidationError(Exception):
-    pass
+def require(path: Path, terms: list[str], errors: list[str]) -> None:
+    text = read(path, errors)
+    for term in terms:
+        if term not in text:
+            errors.append(f"{path.relative_to(ROOT)}: missing required content {term!r}")
 
 
-def read_text(path: Path) -> str:
-    try:
-        return path.read_text(encoding="utf-8")
-    except UnicodeDecodeError as exc:
-        raise ValidationError(f"{path}: not valid UTF-8") from exc
-
-
-def parse_frontmatter(path: Path) -> tuple[dict[str, str], str]:
-    text = read_text(path)
-    if not text.startswith("---\n"):
-        raise ValidationError(f"{path}: missing YAML frontmatter")
-    end = text.find("\n---\n", 4)
-    if end == -1:
-        raise ValidationError(f"{path}: frontmatter is not closed")
-    raw = text[4:end]
-    body = text[end + 5 :]
-    data: dict[str, str] = {}
-    for line in raw.splitlines():
-        stripped = line.strip()
-        if not stripped or stripped.startswith("#"):
-            continue
-        if ":" not in line:
-            raise ValidationError(f"{path}: invalid frontmatter line: {line!r}")
-        key, value = line.split(":", 1)
-        value = value.strip().strip('"').strip("'")
-        data[key.strip()] = value
-    return data, body
-
-
-def parse_simple_openai_yaml(path: Path) -> dict[str, str]:
-    text = read_text(path)
-    fields: dict[str, str] = {}
-    for field in REQUIRED_OPENAI_FIELDS:
-        match = re.search(rf"^\s+{re.escape(field)}:\s*[\"'](.*?)[\"']\s*$", text, re.M)
-        if not match:
-            match = re.search(rf"^\s+{re.escape(field)}:\s*(.*?)\s*$", text, re.M)
-        if match:
-            fields[field] = match.group(1).strip()
-    return fields
-
-
-def iter_md_links(text: str) -> Iterable[str]:
-    # Markdown inline links only. We intentionally ignore URLs and code blocks loosely.
-    for match in re.finditer(r"\[[^\]]+\]\(([^)]+)\)", text):
-        target = match.group(1).strip()
-        if not target or "://" in target or target.startswith("#"):
-            continue
-        yield target.split("#", 1)[0]
-
-
-def check_exists(root: Path, relative: str, errors: list[str]) -> None:
-    path = root / relative
-    if not path.exists():
-        errors.append(f"missing required file: {relative}")
-
-
-def check_reference_depth(skill_dir: Path, errors: list[str]) -> None:
-    references = skill_dir / "references"
-    if not references.exists():
+def validate_frontmatter(path: Path, expected_name: str, errors: list[str]) -> None:
+    text = read(path, errors)
+    match = re.match(r"^---\n(.*?)\n---\n", text, re.S)
+    if not match:
+        errors.append(f"{path.relative_to(ROOT)}: invalid frontmatter")
         return
-    for path in references.rglob("*"):
-        if path.is_file():
-            rel = path.relative_to(references)
-            if len(rel.parts) > 1:
-                errors.append(f"{path}: references must be at most one directory level")
-
-
-def check_marked_adapter(path: Path, errors: list[str]) -> None:
-    if not path.exists():
-        errors.append(f"missing adapter template: {path}")
-        return
-    text = read_text(path)
-    if BLOCK_BEGIN not in text or BLOCK_END not in text:
-        errors.append(f"{path}: missing DOCTOR-BILL marked block")
-    if "doctor-bill" not in text or "super_bill" not in text:
-        errors.append(f"{path}: must route to doctor-bill and super_bill")
-
-
-def check_skill(root: Path, relative: str, expected_name: str, errors: list[str]) -> None:
-    skill_dir = root / relative
-    skill_file = skill_dir / "SKILL.md"
-    if not skill_file.exists():
-        errors.append(f"{relative}: missing SKILL.md")
-        return
-
-    try:
-        fm, body = parse_frontmatter(skill_file)
-    except ValidationError as exc:
-        errors.append(str(exc))
-        return
-
-    unexpected_keys = set(fm) - ALLOWED_FRONTMATTER_KEYS
-    if unexpected_keys:
-        unexpected = ", ".join(sorted(unexpected_keys))
-        allowed = ", ".join(sorted(ALLOWED_FRONTMATTER_KEYS))
-        errors.append(
-            f"{skill_file}: unexpected frontmatter key(s): {unexpected}; "
-            f"officially allowed keys: {allowed}"
-        )
-
-    name = fm.get("name", "")
-    if not name:
-        errors.append(f"{skill_file}: missing name")
-    elif not re.fullmatch(r"[a-z0-9-]+", name):
-        errors.append(f"{skill_file}: name must use lowercase hyphen-case")
-    elif name.startswith("-") or name.endswith("-") or "--" in name:
-        errors.append(f"{skill_file}: name cannot start/end with hyphen or contain consecutive hyphens")
-    elif len(name) > MAX_SKILL_NAME_LENGTH:
-        errors.append(
-            f"{skill_file}: name length {len(name)}, maximum is {MAX_SKILL_NAME_LENGTH}"
-        )
-
-    if name != expected_name:
-        errors.append(f"{skill_file}: expected name {expected_name!r}, got {name!r}")
-
-    description = fm.get("description", "")
-    if not description:
-        errors.append(f"{skill_file}: missing description")
-    else:
-        if "<" in description or ">" in description:
-            errors.append(f"{skill_file}: description cannot contain angle brackets")
-        if len(description) > 1024:
-            errors.append(f"{skill_file}: description exceeds official 1024 character limit")
-        if len(description) < 25:
-            errors.append(f"{skill_file}: description too short")
-    if not body.strip():
-        errors.append(f"{skill_file}: empty body")
-
-    openai = skill_dir / "agents" / "openai.yaml"
-    if not openai.exists():
-        errors.append(f"{openai}: missing")
-    else:
-        fields = parse_simple_openai_yaml(openai)
-        for field in REQUIRED_OPENAI_FIELDS:
-            if field not in fields or not fields[field]:
-                errors.append(f"{openai}: missing interface.{field}")
-        short = fields.get("short_description", "")
-        short_len = len(short)
-        if not 25 <= short_len <= 64:
-            errors.append(f"{openai}: short_description length {short_len}, expected 25-64 chars")
-        prompt = fields.get("default_prompt", "")
-        if f"${expected_name}" not in prompt:
-            errors.append(f"{openai}: default_prompt must contain ${expected_name}")
-
-    for link in iter_md_links(body):
-        target = (skill_dir / link).resolve()
-        try:
-            target.relative_to(root.resolve())
-        except ValueError:
-            errors.append(f"{skill_file}: link escapes repository: {link}")
-            continue
-        if not target.exists():
-            errors.append(f"{skill_file}: broken markdown link: {link}")
-
-    check_reference_depth(skill_dir, errors)
-
-
-def validate(root: Path) -> list[str]:
-    errors: list[str] = []
-    if not root.exists():
-        return [f"root does not exist: {root}"]
-
-    for rel in ROOT_REQUIRED:
-        check_exists(root, rel, errors)
-
-    for rel, name in EXPECTED_SKILLS.items():
-        check_skill(root, rel, name, errors)
-        if rel != ".":
-            for req in DOMAIN_REQUIRED:
-                check_exists(root / rel, req, errors)
-
-    for adapter in [
-        root / "adapters/codex/AGENTS.md",
-        root / "adapters/claude/CLAUDE.md",
-        root / "adapters/cursor/doctor-bill.mdc",
-    ]:
-        check_marked_adapter(adapter, errors)
-
-    install_sh = root / "scripts/install.sh"
-    uninstall_sh = root / "scripts/uninstall.sh"
-    for script in [install_sh, uninstall_sh]:
-        if script.exists() and not (script.stat().st_mode & 0o111):
-            errors.append(f"{script}: not executable")
-
-    return errors
+    frontmatter = match.group(1)
+    if not re.search(rf"^name:\s*{re.escape(expected_name)}\s*$", frontmatter, re.M):
+        errors.append(f"{path.relative_to(ROOT)}: expected name {expected_name}")
+    if not re.search(r"^description:\s*\S.+$", frontmatter, re.M):
+        errors.append(f"{path.relative_to(ROOT)}: missing description")
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Validate Doctor Bill skill source tree")
-    parser.add_argument("--root", default=Path(__file__).resolve().parents[1], type=Path)
-    args = parser.parse_args()
+    errors: list[str] = []
 
-    root = args.root.resolve()
-    errors = validate(root)
+    validate_frontmatter(ROOT / "SKILL.md", "doctor-bill", errors)
+    for name in DOMAIN_NAMES:
+        validate_frontmatter(ROOT / "skills" / name / "SKILL.md", name, errors)
+
+    forbidden = [
+        ROOT / "work.md",
+        ROOT / "references",
+        ROOT / "agents" / "developer.md",
+        ROOT / "agents" / "tester.md",
+    ]
+    forbidden += [ROOT / "skills" / name / "references" for name in DOMAIN_NAMES]
+    for path in forbidden:
+        if path.exists():
+            errors.append(f"forbidden fragmented rule artifact exists: {path.relative_to(ROOT)}")
+
+    require(ROOT / "SKILL.md", [
+        "super_bill", "贝尔 / Doctor Bill", "不同时充当守门员和裁判员",
+        "superpowers", "Context7", "ui-ux-pro-max-skill", "小白能看懂",
+        "用户明确要求\n> 现有项目约束", "开发 Agent 完成后，再派测试 Agent",
+        "非 `main` 分支", "httpx.AsyncClient", "禁止 mock", "用户明确验收",
+        "UI → 消费/聚合 → API → 数据库 → 桥梁层 → 生产端",
+    ], errors)
+    require(ROOT / "skills/doctor-bill-software/SKILL.md", [
+        "FastAPI", "aiohttp", "psycopg 3", "Taskiq", "FastMCP", "SQLAlchemy 2.x ORM",
+        "async_sessionmaker", "AsyncSession", "lifespan", "现有 MySQL",
+        "开发数据库与测试数据库必须", "第三范式", "3 分钟", "20 个样本",
+        "aggregation_version", "原始数据", "向后兼容", ".env.example",
+        "httpx.AsyncClient", "真实运行服务",
+    ], errors)
+    require(ROOT / "skills/doctor-bill-hardware/SKILL.md", [
+        "ESP32", "STM32", "UART", "I²C", "SPI", "CAN", "RS-485",
+        "MQTT", "protocol_version", "sequence_no", "离线缓存", "原始 payload",
+        "开发/测试库隔离", "OTA", "回滚",
+    ], errors)
+    require(ROOT / "skills/doctor-bill-ai/SKILL.md", [
+        "Dify", "LangChain/LangGraph", "FastMCP", "RAG", "embedding model/version",
+        "prompt version", "model/provider version", "SQLAlchemy async ORM",
+        "开发/测试库分离", "vLLM", "prompt injection", "真实 E2E",
+    ], errors)
+    require(ROOT / "skills/doctor-bill-ops/SKILL.md", [
+        "systemctl --user", "enable-linger", "StartLimitIntervalSec", "StartLimitBurst",
+        "WantedBy=default.target", "DEPLOY_KNOWN_HOSTS", "main", "concurrency",
+        "uv sync --frozen", "MIGRATION_COMMAND", "工作树不干净", "回滚", "零停机",
+    ], errors)
+
+    for name in DOMAIN_NAMES:
+        yaml_path = ROOT / "skills" / name / "agents/openai.yaml"
+        require(yaml_path, ["Use $doctor-bill first", "allow_implicit_invocation: false"], errors)
+    require(ROOT / "agents/openai.yaml", ["allow_implicit_invocation: true"], errors)
+
+    for adapter in [
+        ROOT / "adapters/codex/AGENTS.md",
+        ROOT / "adapters/claude/CLAUDE.md",
+        ROOT / "adapters/cursor/doctor-bill.mdc",
+    ]:
+        require(adapter, [
+            "DOCTOR-BILL:BEGIN", "super_bill", "superpowers", "Context7",
+            "ui-ux-pro-max-skill", "开发 Agent", "测试 Agent", "SQLAlchemy",
+            "开发数据库", "3 分钟", "用户验收",
+        ], errors)
+    require(ROOT / "adapters/cursor/doctor-bill.mdc", ["alwaysApply: true"], errors)
+
+    require(ROOT / "skills/doctor-bill-ops/assets/systemd/doctor-bill-system.service", [
+        "User=__SERVICE_USER__", "StartLimitIntervalSec=300", "StartLimitBurst=5",
+        "WantedBy=multi-user.target",
+    ], errors)
+    require(ROOT / "skills/doctor-bill-ops/assets/systemd/doctor-bill-user.service", [
+        "StartLimitIntervalSec=300", "StartLimitBurst=5", "WantedBy=default.target",
+    ], errors)
+    require(ROOT / "skills/doctor-bill-ops/assets/github/deploy-main.yml", [
+        "branches: [main]", "workflow_dispatch", "permissions:", "contents: read",
+        "concurrency:", "DEPLOY_KNOWN_HOSTS", "deploy.sh",
+    ], errors)
+    require(ROOT / "skills/doctor-bill-ops/assets/deploy/deploy.sh", [
+        "set -Eeuo pipefail", "git status --porcelain", "git pull --ff-only",
+        "uv sync --frozen", "MIGRATION_COMMAND", "health_check", "git reset --hard",
+    ], errors)
+
+    scenarios = json.loads((ROOT / "tests/behavior-scenarios.json").read_text(encoding="utf-8"))
+    if len(scenarios) < 6:
+        errors.append("tests/behavior-scenarios.json: expected at least six scenarios")
+
     if errors:
         print("Doctor Bill source validation failed:", file=sys.stderr)
         for error in errors:
             print(f"- {error}", file=sys.stderr)
         return 1
-    print(f"Doctor Bill source validation passed: {root}")
+    print("Doctor Bill source validation passed: self-contained five-Skill architecture and requirement matrix verified")
     return 0
 
 

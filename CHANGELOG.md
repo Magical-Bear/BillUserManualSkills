@@ -1,43 +1,31 @@
 # Changelog
 
-## v2 - 2026-07-13
+## v2.1.0 - 2026-07-13
+
+### Fixed
+
+- Rebuilt Doctor Bill as one mandatory main Skill plus four self-contained domain Skills.
+- Removed fragmented behavioral sources: `work.md`, root/domain `references/`, and passive `agents/developer.md` / `agents/tester.md`.
+- Restored the approved `super_bill` / 贝尔 identity, requirements gate, architecture gate, UI gate, branch-first development, independent testing, acceptance and reporting rules.
+- Restored the exact decision priority and made FastAPI/aiohttp/etc. preferences non-absolute.
+- Restored mandatory SQLAlchemy async ORM, lifespan session factory, request/task session isolation, existing MySQL preference, third normal form, and development/test database isolation.
+- Added the full production → bridge → raw data → aggregation → API → UI scenario workflow and the three-minute-to-hourly-report example.
+- Prevented domain Skills from implicit invocation and routed their default prompts through `$doctor-bill`.
+- Installed the complete five-Skill set for Cursor instead of only installing a short MDC router.
 
 ### Added
 
-- Renamed root Skill from `colleague-beier` to `doctor-bill`.
-- Standardized execution identity as `super_bill`.
-- Added root `agents/openai.yaml`.
-- Added developer and tester role documents:
-  - `agents/developer.md`
-  - `agents/tester.md`
-- Added four domain Skills:
-  - `doctor-bill-software`
-  - `doctor-bill-hardware`
-  - `doctor-bill-ai`
-  - `doctor-bill-ops`
-- Added one-level references for root and each domain Skill.
-- Added user-level adapter templates:
-  - Codex `AGENTS.md`
-  - Claude `CLAUDE.md`
-  - Cursor `.mdc`
-- Added install and uninstall scripts with dry-run, help, path overrides, safe backups, and marked block updates.
-- Added source and installation validators:
-  - `scripts/validate-skills.py`
-  - `scripts/validate-install.py`
-
-### Changed
-
-- Root `SKILL.md` now focuses on gates, routing, role separation, branch rules, merge gates, and final reporting.
-- `work.md` is retained as compatibility navigation instead of being removed.
-- README now documents Doctor Bill v2 architecture, install paths, Cursor path verification, validation, and workflow gates.
-- `meta.json` updated to Doctor Bill v2 metadata.
+- Actionable systemd system/user service templates.
+- No-sudo user service and linger guidance.
+- GitHub Actions main-push deployment workflow.
+- Safe deployment script with dirty-worktree guard, fast-forward update, frozen dependency sync, migration gate, restart, health checks, logs and rollback.
+- Requirement-matrix source validator and six behavior contract scenarios.
+- Installed-content hash validation for Codex, Claude Code and Cursor.
 
 ### Preserved
 
-- `persona.md` is preserved as the original persona source.
-- Legacy technical preferences are migrated into domain Skills and `references/legacy-work-knowledge.md`.
+- Original `persona.md`; mandatory identity and behavior are also embedded in the main Skill so execution does not depend on lazy-loading the persona file.
 
-### Notes
+## v2.0.0 - 2026-07-13
 
-- Automatic restart is explicitly distinguished from zero-downtime deployment.
-- API E2E testing policy requires `asyncio + httpx.AsyncClient` against a real running service, with no mock.
+Initial Doctor Bill v2 release. Superseded by v2.1.0 because mandatory behavior was over-fragmented into optional references and platform/behavior validation was incomplete.

@@ -1,99 +1,102 @@
-# Doctor Bill Skill v2
+# Doctor Bill Skills
 
-> Doctor Bill 是用户级研发协作 Skill。执行身份：`super_bill`。
+> 执行身份：`super_bill`。公开人物与 Skill 品牌：贝尔 / Doctor Bill。
 
-Doctor Bill 覆盖需求分析、软件、硬件、AI、运维、开发、测试、验收和部署流程。它不是单个提示词，而是一套可安装到 Codex、Claude Code 和 Cursor 用户环境的 Skill/规则入口。
+Doctor Bill 是一套用户级工程协作 Skills，覆盖需求讨论、软件、硬件、AI、运维、开发 Agent、测试 Agent、Git、验收和部署。
 
-## 核心原则
+## 架构
 
-- 严格遵循用户指令。
-- 没有清楚到小白能看懂的需求/架构文档，并且用户未批准前，禁止开发。
-- 开发 Agent 只开发。
-- 测试 Agent 只测试，不修改生产代码。
-- 用户验收并明确同意后，才允许合并 `main` 或 push。
-- 最终报告必须说明风险改动、判断依据、时间窗口、超时、重试、阈值和变量位置。
-
-## Skill 结构
+只保留一个主 Skill 和四个领域 Skill。所有强制规则都直接写在对应 `SKILL.md`，不使用 `references`、`work.md` 或独立开发/测试说明文件承载关键行为。
 
 ```text
 .
-├── SKILL.md                         # doctor-bill 主入口
-├── persona.md                       # 保留原有人设
-├── work.md                          # 旧版知识兼容导航
-├── agents/
-│   ├── openai.yaml
-│   ├── developer.md                 # 开发 Agent
-│   └── tester.md                    # 测试 Agent
-├── references/
-│   ├── skill-routing.md
-│   └── legacy-work-knowledge.md
+├── SKILL.md                         # 主 Skill：身份、门禁、路由、Agent、Git、验收
+├── persona.md                       # 原始完整人设归档；主 Skill 已内置必需身份规则
+├── agents/openai.yaml               # 主 Skill UI 元数据
 ├── skills/
 │   ├── doctor-bill-software/
+│   │   ├── SKILL.md
+│   │   └── agents/openai.yaml
 │   ├── doctor-bill-hardware/
+│   │   ├── SKILL.md
+│   │   └── agents/openai.yaml
 │   ├── doctor-bill-ai/
+│   │   ├── SKILL.md
+│   │   └── agents/openai.yaml
 │   └── doctor-bill-ops/
+│       ├── SKILL.md
+│       ├── agents/openai.yaml
+│       └── assets/
+│           ├── systemd/*.service
+│           ├── github/deploy-main.yml
+│           └── deploy/deploy.sh
 ├── adapters/
 │   ├── codex/AGENTS.md
 │   ├── claude/CLAUDE.md
 │   └── cursor/doctor-bill.mdc
+├── tests/behavior-scenarios.json
 └── scripts/
     ├── install.sh
     ├── uninstall.sh
     ├── validate-skills.py
-    └── validate-install.py
+    ├── validate-install.py
+    └── test-behavior-contract.py
 ```
+
+`assets` 只包含可以直接复制和参数化的 systemd、GitHub Actions 和部署模板，不承载隐藏规则。
 
 ## 五个 Skill
 
-| Skill | 作用 |
+| Skill | 职责 |
 |---|---|
-| `doctor-bill` | 主入口、工具门禁、需求批准、领域路由、角色隔离、分支/合并门禁 |
-| `doctor-bill-software` | 产品、前后端、API、数据库、UI、ECharts、异步软件架构 |
-| `doctor-bill-hardware` | ESP32、STM32、传感器、串口、MQTT、固件和设备数据链路 |
-| `doctor-bill-ai` | Dify、LangChain、RAG、Agent、微调、vLLM、ASR/TTS、多模态和评估 |
-| `doctor-bill-ops` | Linux、systemd、linger、无 sudo、GitHub Actions SSH 部署、健康检查和回滚 |
+| `doctor-bill` | 身份、工具门禁、场景需求、领域路由、开发/测试隔离、Git、验收和报告 |
+| `doctor-bill-software` | 软件、异步 API、SQLAlchemy 数据库、报表、UI、可观测性和软件测试 |
+| `doctor-bill-hardware` | ESP32、STM32、传感器、协议、MQTT、离线补传和设备链路 |
+| `doctor-bill-ai` | Dify、RAG、Agent、FastMCP、模型、推理、微调、评估和 AI 数据治理 |
+| `doctor-bill-ops` | systemd、linger、无 sudo 服务、Actions 自动部署、健康检查和回滚 |
 
-## 强制工具门禁
+四个领域 Skill 禁止隐式调用。它们的 `default_prompt` 要求先使用 `$doctor-bill`，避免绕过主门禁。
 
-Doctor Bill 的正式研发流程要求：
+## 核心门禁
 
-1. 需求讨论必须使用 `superpowers`。
-2. 技术选型和架构分析必须使用 `Context7` 查询当前版本官方文档。
-3. 涉及 UI、管理后台、报表、大屏、ECharts、布局或视觉设计时，必须使用 `ui-ux-pro-max-skill`。
+1. 正式需求讨论必须使用 `superpowers`。
+2. 架构和技术选型必须使用 `Context7` 查询当前官方文档。
+3. 涉及 UI、报表、ECharts、后台、大屏、布局或视觉时必须使用 `ui-ux-pro-max-skill`。
+4. 缺失能力时停止对应阶段，引导安装和验证。
+5. 没有小白可读的需求/架构文档且用户未批准前禁止开发。
+6. 正式开发必须在非 `main` 分支。
+7. 开发 Agent 完成后才能派测试 Agent；测试 Agent 不修改被测生产代码。
+8. 用户验收并明确同意后才能合并或 push main。
 
-缺失时停止对应阶段，引导用户安装并验证后继续。
+决策优先级：
 
-## 默认软件架构
+```text
+用户明确要求
+> 现有项目约束
+> 当前官方兼容性和安全要求
+> super_bill 默认技术偏好
+```
 
-用户和现有项目没有指定其他方案时：
+FastAPI、aiohttp、APScheduler、Vue、ECharts、vLLM 等属于默认偏好，不是所有项目的绝对要求。
 
-- Python 3.11+ 和 uv。
-- FastAPI + Pydantic v2。
-- SQLAlchemy 2.x ORM。
-- async engine + `async_sessionmaker`。
-- engine/session factory 放在 lifespan 管理。
-- 请求级 `AsyncSession`，禁止全局共享 session。
-- 优先服务器已有 MySQL。
-- Redis 异步客户端。
-- aiohttp 对外 HTTP 请求。
-- Python 3.11+ `asyncio.TaskGroup`。
-- APScheduler 异步定时任务。
-- Vue 3 + Vite。
-- ECharts。
+## 数据库规则
 
-数据库默认第三范式。报表允许聚合表或受控冗余，但必须保留原始数据，聚合结果可重算，协议字段向后兼容。
+除非用户明确指定其他方案架构：
 
-## 运维默认规则
+- 必须 SQLAlchemy 2.x ORM。
+- 必须 async engine、`async_sessionmaker`、`AsyncSession`。
+- engine/session factory 由 lifespan 创建和释放。
+- session 请求级或任务级隔离，禁止全局共享。
+- 优先服务器现有 MySQL。
+- 开发数据库与测试数据库必须分离。
+- 业务主数据默认第三范式。
+- 报表可使用聚合表，但必须保留原始数据、版本化、可重算并向后兼容。
 
-- 有 sudo 且用户批准时可以设计 system service。
-- 无 sudo 时优先 systemd user service：`~/.config/systemd/user/` + `systemctl --user`。
-- 必须检查 linger：`loginctl show-user <user> -p Linger`。
-- 当前用户无法启用 linger 时，给管理员命令，不绕权限。
-- GitHub Actions 部署使用 main push + SSH + known_hosts + Secrets + concurrency 锁。
-- 部署步骤包含项目目录、`uv sync`、已批准迁移、服务重启、健康检查、日志采集和回滚。
-- 自动重启不等于零停机；零停机需要单独设计蓝绿/滚动/切流。
+软件 Skill 包含“每 3 分钟上报、每小时理论 20 个样本”的完整示例，要求确认聚合公式、缺失、去重、迟到、时区和重算。
 
 ## 安装
+
+安装器会备份已存在的同名 Skill/入口，并安装完整五个 Skill。
 
 ### Codex
 
@@ -101,21 +104,11 @@ Doctor Bill 的正式研发流程要求：
 ./scripts/install.sh --platform codex
 ```
 
-默认安装到：
+默认目标：
 
 ```text
-~/.codex/skills/doctor-bill
-~/.codex/skills/doctor-bill-software
-~/.codex/skills/doctor-bill-hardware
-~/.codex/skills/doctor-bill-ai
-~/.codex/skills/doctor-bill-ops
+~/.codex/skills/doctor-bill*
 ~/.codex/AGENTS.md
-```
-
-覆盖路径：
-
-```bash
-./scripts/install.sh --platform codex --codex-home /path/to/.codex
 ```
 
 ### Claude Code
@@ -124,56 +117,89 @@ Doctor Bill 的正式研发流程要求：
 ./scripts/install.sh --platform claude
 ```
 
-默认安装到：
+默认目标：
 
 ```text
-~/.claude/skills/doctor-bill
-~/.claude/skills/doctor-bill-software
-~/.claude/skills/doctor-bill-hardware
-~/.claude/skills/doctor-bill-ai
-~/.claude/skills/doctor-bill-ops
+~/.claude/skills/doctor-bill*
 ~/.claude/CLAUDE.md
-```
-
-覆盖路径：
-
-```bash
-./scripts/install.sh --platform claude --claude-home /path/to/.claude
 ```
 
 ### Cursor
 
-Cursor 的用户级 Rules 路径会随版本、平台和用户配置变化。不要盲猜。
-
-验证策略：
-
-1. 打开 Cursor 设置，查找 Rules/User Rules/Project Rules 的实际存放目录。
-2. 或确认当前机器是否存在 `~/.cursor/rules`。
-3. 将确认后的目录传给安装器。
-
 ```bash
-./scripts/install.sh --platform cursor --cursor-rules-dir /verified/cursor/rules/path
+./scripts/install.sh --platform cursor
 ```
 
-如果本机存在 `~/.cursor/rules` 且没有传参，安装器会使用它；否则会跳过 Cursor 并提示传参。
+默认目标：
 
-### 全部平台
+```text
+~/.cursor/skills/doctor-bill*
+~/.cursor/rules/doctor-bill.mdc
+```
+
+Cursor 不同版本或配置的用户级 Rules/Skills 目录可能不同。安装前先确认当前配置；不同时显式覆盖：
+
+```bash
+./scripts/install.sh --platform cursor \
+  --cursor-rules-dir /verified/user/rules \
+  --cursor-skills-dir /verified/user/skills
+```
+
+### 全平台或自定义用户目录
 
 ```bash
 ./scripts/install.sh --platform all
+./scripts/install.sh --platform all --dry-run
+./scripts/install.sh --platform codex --codex-home /path/to/.codex
+./scripts/install.sh --platform claude --claude-home /path/to/.claude
 ```
 
-### dry-run
+安装完成后重新启动或重新加载对应 Agent，并确认能识别 `doctor-bill`、四个领域 Skill 和用户级入口。
+
+## 缺失依赖的处理
+
+Doctor Bill 不伪造第三方 Skill/MCP 安装命令。先按当前平台检查：
+
+- `superpowers` 是否出现在可用 Skills 中。
+- `Context7` 是否出现在可用 MCP/工具中。
+- `ui-ux-pro-max-skill` 是否出现在可用 Skills 中。
+
+缺失时使用平台当前支持的用户级 Skill 安装器或 MCP 配置安装，重新加载平台并验证名称可见；验证前不进入对应正式阶段。
+
+## 运维模板
+
+`doctor-bill-ops/assets` 提供：
+
+- systemd system service 模板。
+- systemd user service 模板。
+- main push GitHub Actions workflow。
+- 检查脏工作树、`pull --ff-only`、依赖同步、可选迁移、重启、健康检查、日志和回滚的部署脚本。
+
+使用前必须替换占位符和变量，并在测试环境验证。自动更新并重启不等于严格零停机。
+
+## 校验
 
 ```bash
-./scripts/install.sh --platform all --dry-run
+bash -n scripts/install.sh scripts/uninstall.sh skills/doctor-bill-ops/assets/deploy/deploy.sh
+python3 scripts/validate-skills.py
+python3 scripts/test-behavior-contract.py
 ```
 
-安装器会：
+临时目录安装验证：
 
-- 安全备份已存在 Skill 目录。
-- 通过 `<!-- DOCTOR-BILL:BEGIN -->` / `<!-- DOCTOR-BILL:END -->` 标记区块更新入口文件。
-- 不写入密钥。
+```bash
+TMP_ROOT="$(mktemp -d)"
+./scripts/install.sh --platform all \
+  --codex-home "$TMP_ROOT/codex" \
+  --claude-home "$TMP_ROOT/claude" \
+  --cursor-home "$TMP_ROOT/cursor"
+python3 scripts/validate-install.py --platform all \
+  --codex-home "$TMP_ROOT/codex" \
+  --claude-home "$TMP_ROOT/claude" \
+  --cursor-home "$TMP_ROOT/cursor"
+```
+
+`validate-skills.py` 验证五 Skill 自包含结构和确认需求矩阵；`test-behavior-contract.py` 验证六个典型场景的规则覆盖。它们不冒充独立模型行为测试，发布前仍需测试 Agent 做真实前向检查。
 
 ## 卸载
 
@@ -181,62 +207,7 @@ Cursor 的用户级 Rules 路径会随版本、平台和用户配置变化。不
 ./scripts/uninstall.sh --platform all
 ```
 
-卸载器会把安装目录移动到带时间戳的备份，并从入口文件移除 Doctor Bill 标记区块。
-
-## 校验
-
-源码结构校验：
-
-```bash
-python3 scripts/validate-skills.py
-```
-
-安装产物校验：
-
-```bash
-python3 scripts/validate-install.py --platform codex
-python3 scripts/validate-install.py --platform claude
-python3 scripts/validate-install.py --platform cursor --cursor-rules-dir /verified/cursor/rules/path
-```
-
-临时目录完整验证示例：
-
-```bash
-TMP_ROOT=/tmp/doctor-bill-install-check
-./scripts/install.sh \
-  --platform all \
-  --codex-home "$TMP_ROOT/codex" \
-  --claude-home "$TMP_ROOT/claude" \
-  --cursor-rules-dir "$TMP_ROOT/cursor-rules"
-python3 scripts/validate-install.py \
-  --platform all \
-  --codex-home "$TMP_ROOT/codex" \
-  --claude-home "$TMP_ROOT/claude" \
-  --cursor-rules-dir "$TMP_ROOT/cursor-rules"
-```
-
-## 开发/测试/验收流程
-
-```text
-需求讨论(superpowers)
-  → 架构分析(Context7)
-  → UI 方案(ui-ux-pro-max-skill，如涉及 UI)
-  → 用户批准
-  → 非 main 分支开发
-  → 开发 Agent 报告风险和变量位置
-  → 测试 Agent 静态→单元→集成→E2E→冒烟
-  → 用户验收
-  → 用户明确同意后合并 main/push
-```
-
-API E2E 测试必须使用 `asyncio + httpx.AsyncClient` 请求真实运行服务，禁止 mock。
-
-## 安全说明
-
-- 不读取生产 `.env`，除非用户明确允许。
-- 不提交密码、Token、私钥和生产环境文件。
-- 不擅自执行破坏性 Git 操作。
-- 不同时充当守门员和裁判员。
+卸载时不会直接删除安装产物，而是移动到带时间戳的备份，并从 `AGENTS.md`/`CLAUDE.md` 移除 Doctor Bill 标记区块。
 
 ## License
 
