@@ -1,174 +1,30 @@
-# 贝尔 - Work Skill
+# Doctor Bill Work Knowledge
 
-## 基础信息
-- **姓名**: 贝尔
-- **性别**: 男
-- **身份**: 全栈工程师
-- **教育**: 垃圾学校
-- **自我评价**: "失败的 loser"
+旧版 `work.md` 保留为兼容导航，不删除。
 
----
+有效技术知识已迁移到：
 
-## 硬件开发
+- `skills/doctor-bill-software/SKILL.md`
+- `skills/doctor-bill-software/references/software-architecture.md`
+- `skills/doctor-bill-hardware/SKILL.md`
+- `skills/doctor-bill-hardware/references/hardware-iot.md`
+- `skills/doctor-bill-ai/SKILL.md`
+- `skills/doctor-bill-ai/references/ai-architecture.md`
+- `skills/doctor-bill-ops/SKILL.md`
+- `skills/doctor-bill-ops/references/systemd-github-actions.md`
+- `references/legacy-work-knowledge.md`
 
-### ESP32
-- **首选方案**: MicroPython
-- **次选方案**: Arduino
-- 熟悉 ESP32 全系列开发
+继续保留的默认偏好：
 
-### STM32
-- **精通串口通信**
-  - 串口数据格式: 以 `\r\n` 结尾
-  - 数据协议: JSON 格式传递数据
-- 熟练 HAL，库函数开发，行动之前先问好
+- Python 3.11+，uv 优先。
+- FastAPI + asyncio + lifespan。
+- SQLAlchemy 2.x ORM + async engine + async_sessionmaker。
+- aiohttp，不用 requests 写异步服务对外请求。
+- aiomqtt，不用 paho-mqtt 写异步 MQTT 服务。
+- Redis 使用新版异步客户端。
+- Python 3.11+ `asyncio.TaskGroup`。
+- Dify、LangChain 当前版本、RAG/Agent/微调/推理需要先查官方文档。
+- Vue 3 + Vite，图表优先 ECharts。
+- 运维先检查环境和权限，无 sudo 时优先 systemd user service。
 
-### 传感器
-- 红外对射传感器
-- 超声波传感器
-- 五路循迹传感器
-- 温湿度
-- 环境传感
-- 8位数码管
-- 键盘
-- i2c通信
-- **应用场景**: 超大项目中的传感器组网
-
-### 结构设计
-- **铝型材系统**
-  - 内置角码: 用于连接两个部件
-  - 转向角码: 用于垂直叠放
-  - 滑块螺母: 用于在铝型材上安装螺丝
-
----
-
-## 通信协议
-
-### 物联网设备间
-- **首选**: MQTT
-- 熟悉 MQTT  Topic 设计、QoS 级别
-
-### 服务器间通信
-- **首选**: HTTP
-- **备选**: WebSocket（需要实时性时）
-
----
-
-## 后端开发（Python 全栈）
-
-### 基础环境
-- **Python 版本**: 3.11+（使用新特性）
-- **版本管理优先级**:
-  1. UV（优先检查, 且优先uv add packages）
-  2. Conda（备选）
-- **配置管理**：.env配置url, api-key, db_user, db_password等，代码内部严禁写静态url，无论代码结构如何.env始终位于项目根目录，且你只需要创建.env.example 并复制为.env，严禁读取.env除非用户允许。
-
-### 核心框架
-- **Web 框架**: FastAPI（所有 Web 项目强制使用）
-- **架构模式**: 全异步结构
-- **关键特性**:
-  - 使用from fastmcp import fastmcp，优先streamable-http模式
-  - 使用 `asyncio` 构建
-  - 使用 `context manager` 管理异步资源
-  - 使用 FastAPI `lifespan` 进行依赖注入管理
-  - 使用 `Pydantic v2` 数据校验
-  - 如果需要用户身份鉴权，请使用OAuth2 + JWT校验。除注册，登陆外，身份验证使用异步Depends依赖注入。必须向用户明确是需要Bearer api-key还是jwt鉴权
-  - 当涉及langchain时，请优先查询文档后再开发，文档地址`https://docs.langchain.com/oss/python/langchain/agents`, 特别是langchain 1.0 重构了agent创建方式，必须仔细核验
-
-
-### 异步 HTTP 请求
-- **强制使用**: `aiohttp`
-- **禁止使用**: `requests`（同步库）
-
-### 数据库与中间件
-
-| 组件 | 库 | 备注 |
-|------|-----|------|
-| MQTT | `aiomqtt` | 异步 MQTT 客户端 |
-| Redis | `redis-py` | 最新版支持异步 |
-| 消息队列 | `taskiq` | 异步任务队列 |
-| MySQL | `SQLAlchemy` | ORM + 异步支持 |
-
-### 机器学习
-- **框架**: Hugging Face + PyTorch
-- **部署**: 优先使用 vLLM
-- **LangChain**: 强制使用 V1.0
-  - V1.0 重构了 Agent 模式
-  - 必须使用新版中间件接口
-- **开发平台**: 精通 Dify、langchain、ms-swift框架大模型微调、智能体开发
-
-### DevOps
-- **精通 Linux 开发**
-- 可使用 SSH-MCP 连接服务器完成运维操作
-https://github.com/tufantunc/ssh-mcp
----
-
-## 前端开发
-
-### 技术栈
-- **框架**: Vue 3
-- **构建工具**: Vite
-- **语言**: JavaScript
-- **项目结构**: Vite + Vue 3 + JS
-
----
-
-## 典型项目架构模式
-
-### 模式一: 标准物联网流水线
-```
-硬件设备 --MQTT--> aiomqtt订阅 --→ FastAPI后端 --→ 数据库
-```
-
-- 硬件通过 MQTT 上传消息
-- Python 后端使用 aiomqtt 订阅 Topic
-- 接收消息处理后送入数据库
-### 模式二: 大模型数据对接
-```
-aiomqtt ←→ FastAPI ←→ 数据库
-                   ←→ FastMCP
-   ↑
-MQTT消息 --→ HTTP端点转换
-```
-
-- 大模型需要数据时: 使用 FastMCP 对接FastAPI
-- aiomqtt实现消息互转，在FastAPI lifespan依赖注入实现
-参考项目：https://github.com/Magical-Bear/aiomqtt-fastapi-convertor
-
-### 模式三: 多模态 AI 客户端
-```
-唤醒词检测 → 录音 → ASR转文本
-                    ↓
-拍照 → 图像 + 文本 → Dify工作流 → 流式返回
-                    ↓
-            TTS语音播放 ← 流式解析
-```
-
-1. 唤醒词识别检测用户语音
-2. 识别成功则开始录音
-3. 语音提交 ASR 转成文本
-4. 同时拍摄照片
-5. 文本 + 图像发送到 Dify 工作流
-6. Dify 流式返回结果
-7. 客户端流式解析并转 TTS 播放
-参考项目：https://github.com/Magical-Bear/multimodal-asr-agent-tts 没有访问权联系刘陈强
----
-
-## 输出规范
-
-### 代码风格
-- 全异步架构，禁止同步阻塞调用
-- 强制类型注解
-- 使用 `async`/`await` 模式
-- 资源管理必须用 `async with`
-
-### 技术选型原则
-1. 能用异步就不用同步
-2. 能用 UV 就不用 conda
-3. 能用 FastAPI 就不用其他框架
-4. linux能用 vLLM 就不用其他推理框架，windows平台无所谓
-5. 能用 LangChain V1.0 就不用旧版
-
-### 沟通风格
-- 直接给出代码，少废话，详细解释代码含义
-- 默认对方不懂技术，傻的要命像教小学生
-- 如果方案有明显缺陷会直接指出
+注意：本文件不再承载完整流程。执行时以 `SKILL.md` 和领域 Skill 为准。

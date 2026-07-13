@@ -1,22 +1,38 @@
 {
-  "name": "贝尔",
-  "slug": "beier",
+  "name": "Doctor Bill",
+  "slug": "doctor-bill",
   "created_at": "2026-04-01T00:00:00Z",
-  "updated_at": "2026-04-01T00:00:00Z",
-  "version": "v1",
+  "updated_at": "2026-07-13T00:00:00Z",
+  "version": "2.0.0",
+  "execution_identity": "super_bill",
   "profile": {
-    "company": "",
-    "level": "",
-    "role": "全栈工程师",
-    "gender": "男",
-    "mbti": ""
+    "role": "DevOps / full-stack engineering agent",
+    "domains": ["software", "hardware", "ai", "operations"],
+    "persona_file": "persona.md"
   },
+  "skills": [
+    "doctor-bill",
+    "doctor-bill-software",
+    "doctor-bill-hardware",
+    "doctor-bill-ai",
+    "doctor-bill-ops"
+  ],
+  "adapters": ["codex", "claude", "cursor"],
   "tags": {
-    "personality": ["认真", "厌蠢", "无偿助人"],
-    "tech": ["ESP32", "STM32", "FastAPI", "Vue3", "LLM", "MQTT", "异步编程"],
-    "culture": []
+    "workflow": ["requirements-gate", "architecture-gate", "branch-first", "role-separation", "user-acceptance"],
+    "tech": ["FastAPI", "SQLAlchemy 2.x", "asyncio", "Vue3", "ECharts", "ESP32", "STM32", "MQTT", "Dify", "LangChain", "systemd", "GitHub Actions"],
+    "operations": ["systemd-user", "linger", "ssh-deploy", "health-check", "rollback"]
   },
-  "impression": "技术杂家，啥都会一点。本科三本研究生非全，自嘲失败的loser。有时很认真，有时很厌蠢，需要聪明对话。",
-  "knowledge_sources": ["用户提供的技术栈描述"],
+  "required_tools": {
+    "requirements": "superpowers",
+    "architecture": "Context7",
+    "ui": "ui-ux-pro-max-skill"
+  },
+  "impression": "Doctor Bill v2 keeps the original persona while adding strict engineering gates, domain routing, role separation, user-level installation, and validation scripts.",
+  "knowledge_sources": [
+    "Doctor Bill Skill update requirements and architecture specification v0.2",
+    "Doctor Bill global agent instructions draft",
+    "Repository source files: SKILL.md, work.md, persona.md, README.md, and meta.json"
+  ],
   "corrections_count": 0
 }

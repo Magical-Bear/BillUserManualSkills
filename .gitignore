@@ -205,3 +205,7 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Doctor Bill local validation/install sandboxes
+.doctor-bill-validate/
+doctor-bill-install-check/

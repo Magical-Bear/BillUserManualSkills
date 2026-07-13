@@ -1,0 +1,6 @@
+interface:
+  display_name: "Doctor Bill Ops"
+  short_description: "Linux、systemd、无 sudo 部署、Actions 与回滚规范"
+  default_prompt: "Use $doctor-bill-ops to design systemd services, no-sudo user deployment, GitHub Actions SSH deploys, health checks, and rollback."
+policy:
+  allow_implicit_invocation: true
