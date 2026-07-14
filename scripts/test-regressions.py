@@ -55,6 +55,8 @@ def test_unique_backups_and_custom_content(tmp: Path) -> None:
 
     assert "CODEX CUSTOM CONTENT" in (codex / "AGENTS.md").read_text(encoding="utf-8")
     assert "CLAUDE CUSTOM CONTENT" in (claude / "CLAUDE.md").read_text(encoding="utf-8")
+    for skills_root in [codex / "skills", claude / "skills", cursor / "skills"]:
+        assert not (skills_root / "doctor-bill/persona.md").exists(), "obsolete persona.md was installed"
     backups = list((cursor / "rules").glob("doctor-bill.mdc.doctor-bill-backup-*"))
     assert len(backups) == 2, f"expected two unique Cursor backups, found {backups}"
     assert len({path.name for path in backups}) == len(backups)

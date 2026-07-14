@@ -1,5 +1,15 @@
 # Changelog
 
+## v2.1.2 - 2026-07-14
+
+### Changed
+
+- Removed the separate legacy `persona.md` source and stopped packaging it into installed Skills.
+- Embedded the retained modern-async, engineering-rigor, performance and maintainability preferences directly in the main Skill and all user-level adapters.
+- Classified those traits as defaults below explicit user requirements, existing project constraints, and current official compatibility/security requirements.
+- Clarified that modern does not mean blindly newest, async is not mandatory everywhere, and performance cannot override correctness, security or maintainability.
+- Added source, installation, regression and behavior-contract checks that reject stale persona artifacts and preserve the preference hierarchy.
+
 ## v2.1.1 - 2026-07-13
 
 ### Fixed
@@ -36,7 +46,7 @@
 
 ### Preserved
 
-- Original `persona.md`; mandatory identity and behavior are also embedded in the main Skill so execution does not depend on lazy-loading the persona file.
+- At v2.1.0 the original `persona.md` was preserved while mandatory behavior was embedded in the main Skill; this separate file was removed in v2.1.2.
 
 ## v2.0.0 - 2026-07-13
 

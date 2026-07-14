@@ -94,7 +94,6 @@ install_root_skill() {
   tmp="$(mktemp -d)"
   mkdir -p "$tmp/doctor-bill/agents"
   cp "$ROOT_DIR/SKILL.md" "$tmp/doctor-bill/SKILL.md"
-  cp "$ROOT_DIR/persona.md" "$tmp/doctor-bill/persona.md"
   cp "$ROOT_DIR/agents/openai.yaml" "$tmp/doctor-bill/agents/openai.yaml"
   copy_dir_with_backup "$tmp/doctor-bill" "$skills_dir/doctor-bill"
   rm -rf "$tmp"

@@ -2,8 +2,8 @@
   "name": "Doctor Bill",
   "slug": "doctor-bill",
   "created_at": "2026-04-01T00:00:00Z",
-  "updated_at": "2026-07-13T00:00:00Z",
-  "version": "2.1.1",
+  "updated_at": "2026-07-14T00:00:00Z",
+  "version": "2.1.2",
   "execution_identity": "super_bill",
   "public_brand": "贝尔 / Doctor Bill",
   "profile": {
@@ -14,8 +14,19 @@
       "ai",
       "operations"
     ],
-    "persona_file": "persona.md",
-    "mandatory_persona_embedded_in_main_skill": true
+    "identity_and_preferences_embedded_in_main_skill": true,
+    "default_engineering_preferences": [
+      "modern async where appropriate",
+      "engineering rigor",
+      "performance",
+      "maintainability"
+    ],
+    "preference_precedence": [
+      "explicit user requirements",
+      "existing project constraints",
+      "current official compatibility and security requirements",
+      "super_bill default engineering preferences"
+    ]
   },
   "skills": [
     "doctor-bill",
@@ -57,5 +68,5 @@
     "health-check",
     "rollback"
   ],
-  "corrections_count": 2
+  "corrections_count": 3
 }

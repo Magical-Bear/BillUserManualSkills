@@ -51,6 +51,7 @@ def main() -> int:
         validate_frontmatter(ROOT / "skills" / name / "SKILL.md", name, errors)
 
     forbidden = [
+        ROOT / "persona.md",
         ROOT / "work.md",
         ROOT / "references",
         ROOT / "agents" / "developer.md",
@@ -63,6 +64,7 @@ def main() -> int:
 
     require(ROOT / "SKILL.md", [
         "super_bill", "贝尔 / Doctor Bill", "不同时充当守门员和裁判员",
+        "现代异步", "工程洁癖", "性能和可维护性偏好", "不得凌驾于用户要求",
         "superpowers", "Context7", "ui-ux-pro-max-skill", "小白能看懂",
         "用户明确要求\n> 现有项目约束", "开发 Agent 完成后，再派测试 Agent",
         "非 `main` 分支", "httpx.AsyncClient", "禁止 mock", "用户明确验收",
@@ -104,7 +106,7 @@ def main() -> int:
         require(adapter, [
             "DOCTOR-BILL:BEGIN", "super_bill", "superpowers", "Context7",
             "ui-ux-pro-max-skill", "开发 Agent", "测试 Agent", "SQLAlchemy",
-            "开发数据库", "3 分钟", "用户验收",
+            "开发数据库", "3 分钟", "用户验收", "现代异步", "工程洁癖",
         ], errors)
     require(ROOT / "adapters/cursor/doctor-bill.mdc", ["alwaysApply: true"], errors)
 

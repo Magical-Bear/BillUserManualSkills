@@ -59,5 +59,15 @@
       "skills/doctor-bill-ai/agents/openai.yaml",
       "skills/doctor-bill-ops/agents/openai.yaml"
     ]
+  },
+  {
+    "id": "engineering-preference-priority",
+    "prompt": "保留现代异步、工程洁癖、性能和可维护性偏好，但不要覆盖项目约束。",
+    "must_cover": [
+      "现代异步", "工程洁癖", "性能和可维护性偏好", "默认工程偏好",
+      "不得凌驾于用户要求", "现有项目约束", "官方兼容性和安全要求",
+      "不等于盲目追新", "不等于所有场景强制异步"
+    ],
+    "files": ["SKILL.md"]
   }
 ]

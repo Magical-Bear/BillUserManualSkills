@@ -32,8 +32,8 @@ def check_skill_set(skills_dir: Path, errors: list[str]) -> None:
             if (skills_dir / name / forbidden).exists():
                 errors.append(f"fragmented rule artifact installed: {skills_dir / name / forbidden}")
     root_persona = skills_dir / "doctor-bill" / "persona.md"
-    if not root_persona.is_file():
-        errors.append(f"missing preserved persona: {root_persona}")
+    if root_persona.exists():
+        errors.append(f"obsolete separate persona artifact installed: {root_persona}")
     for relative in [
         "assets/systemd/doctor-bill-system.service",
         "assets/systemd/doctor-bill-user.service",
