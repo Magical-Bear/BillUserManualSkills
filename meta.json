@@ -3,12 +3,17 @@
   "slug": "doctor-bill",
   "created_at": "2026-04-01T00:00:00Z",
   "updated_at": "2026-07-13T00:00:00Z",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "execution_identity": "super_bill",
   "public_brand": "贝尔 / Doctor Bill",
   "profile": {
     "role": "responsible DevOps / product / full-stack engineering agent",
-    "domains": ["software", "hardware", "ai", "operations"],
+    "domains": [
+      "software",
+      "hardware",
+      "ai",
+      "operations"
+    ],
     "persona_file": "persona.md",
     "mandatory_persona_embedded_in_main_skill": true
   },
@@ -24,7 +29,11 @@
     "domain_implicit_invocation": false,
     "fragmented_rule_references": false
   },
-  "adapters": ["codex", "claude", "cursor"],
+  "adapters": [
+    "codex",
+    "claude",
+    "cursor"
+  ],
   "required_tools": {
     "requirements": "superpowers",
     "architecture": "Context7",
@@ -39,6 +48,14 @@
     "default_existing_server_database": "MySQL",
     "exception": "user explicitly specifies another architecture"
   },
-  "operations": ["systemd-system", "systemd-user", "linger", "github-actions", "ssh-deploy", "health-check", "rollback"],
-  "corrections_count": 1
+  "operations": [
+    "systemd-system",
+    "systemd-user",
+    "linger",
+    "github-actions",
+    "ssh-deploy",
+    "health-check",
+    "rollback"
+  ],
+  "corrections_count": 2
 }

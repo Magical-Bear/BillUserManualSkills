@@ -117,11 +117,20 @@ def main() -> int:
     ], errors)
     require(ROOT / "skills/doctor-bill-ops/assets/github/deploy-main.yml", [
         "branches: [main]", "workflow_dispatch", "permissions:", "contents: read",
-        "concurrency:", "DEPLOY_KNOWN_HOSTS", "deploy.sh",
+        "concurrency:", "timeout-minutes: 15", "DEPLOY_KNOWN_HOSTS",
+        "BatchMode=yes", "ConnectTimeout=15", "HEALTH_TIMEOUT_SECONDS", "APP_DIR_B64", "deploy.sh",
     ], errors)
     require(ROOT / "skills/doctor-bill-ops/assets/deploy/deploy.sh", [
         "set -Eeuo pipefail", "git status --porcelain", "git pull --ff-only",
-        "uv sync --frozen", "MIGRATION_COMMAND", "health_check", "git reset --hard",
+        "uv sync --frozen", "npm ci", "MIGRATION_COMMAND", "health_check", "git reset --hard",
+        "sudo -n systemctl", "rollback result:", "CRITICAL:", "base64 --decode",
+    ], errors)
+
+    require(ROOT / "scripts/install.sh", ["unique_backup_path", "doctor-bill-backup", "-$$"], errors)
+    require(ROOT / "scripts/uninstall.sh", ["unique_backup_path", "doctor-bill-uninstall", "-$$"], errors)
+    require(ROOT / "scripts/test-regressions.py", [
+        "unique backups and custom content", "node rollback and reporting",
+        "critical rollback and dirty guard", "base64 transport",
     ], errors)
 
     scenarios = json.loads((ROOT / "tests/behavior-scenarios.json").read_text(encoding="utf-8"))

@@ -141,6 +141,7 @@ SERVICE_NAME
 HEALTH_URL
 HEALTH_ATTEMPTS
 HEALTH_INTERVAL_SECONDS
+HEALTH_TIMEOUT_SECONDS
 MIGRATION_COMMAND
 ```
 
@@ -168,8 +169,8 @@ ssh-keygen -t ed25519 -C "github-actions-deploy" -f ./doctor_bill_deploy_key
 
 1. 仅在 `main` push 或人工触发时运行。
 2. 使用 `permissions: contents: read`。
-3. 使用 concurrency group，避免同一环境并发部署。
-4. 配置 SSH 私钥和 known_hosts。
+3. 使用 concurrency group 和 job timeout，避免同一环境并发部署或无限挂起。
+4. 配置 SSH 私钥和 known_hosts，并启用 BatchMode、连接超时和 keepalive。
 5. 连接服务器并检查项目目录、分支和工作树。
 6. 工作树不干净时中止，不覆盖服务器人工修改。
 7. 记录部署前 commit。
@@ -178,8 +179,8 @@ ssh-keygen -t ed25519 -C "github-actions-deploy" -f ./doctor_bill_deploy_key
 10. 只有用户明确批准时执行 migration 命令。
 11. 重启 systemd system/user service。
 12. 循环调用真实健康接口。
-13. 失败时采集 status/journal，回滚到部署前 commit，同步依赖并重启。
-14. 报告部署 commit、健康结果和回滚状态。
+13. 失败时采集 status/journal，回滚到部署前 commit，按旧锁文件重新执行 `uv sync --frozen` 或 `npm ci`，再重启和复检。
+14. 分项报告 Git reset、依赖恢复、服务重启和健康复检状态；任一步失败必须标记 `CRITICAL`，不得用 `|| true` 隐藏。
 
 ## 9. 数据库迁移门禁
 

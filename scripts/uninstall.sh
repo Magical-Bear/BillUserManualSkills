@@ -8,7 +8,7 @@ CLAUDE_HOME="${CLAUDE_HOME:-$HOME/.claude}"
 CURSOR_HOME="${CURSOR_HOME:-$HOME/.cursor}"
 CURSOR_RULES_DIR="${CURSOR_RULES_DIR:-}"
 CURSOR_SKILLS_DIR="${CURSOR_SKILLS_DIR:-}"
-BACKUP_SUFFIX="doctor-bill-uninstall-$(date +%Y%m%d%H%M%S)"
+BACKUP_TAG="doctor-bill-uninstall"
 SKILLS=(doctor-bill doctor-bill-software doctor-bill-hardware doctor-bill-ai doctor-bill-ops)
 
 usage() {
@@ -33,6 +33,16 @@ USAGE
 }
 
 log() { printf '%s\n' "$*"; }
+unique_backup_path() {
+  local path="$1" stamp candidate counter=0
+  stamp="$(date +%Y%m%d%H%M%S)-$$"
+  candidate="${path}.${BACKUP_TAG}-${stamp}"
+  while [[ -e "$candidate" ]]; do
+    counter=$((counter + 1))
+    candidate="${path}.${BACKUP_TAG}-${stamp}-${counter}"
+  done
+  printf '%s\n' "$candidate"
+}
 run() {
   if [[ "$DRY_RUN" == "1" ]]; then
     printf '[dry-run] %q' "$1"; shift || true
@@ -63,7 +73,8 @@ CURSOR_SKILLS_DIR="${CURSOR_SKILLS_DIR:-$CURSOR_HOME/skills}"
 move_to_backup() {
   local path="$1"
   [[ -e "$path" ]] || return 0
-  local backup="${path}.${BACKUP_SUFFIX}"
+  local backup
+  backup="$(unique_backup_path "$path")"
   log "Move to backup: $path -> $backup"
   run mv "$path" "$backup"
 }
@@ -71,7 +82,8 @@ move_to_backup() {
 remove_marked_block() {
   local target="$1"
   [[ -e "$target" ]] || return 0
-  local backup="${target}.${BACKUP_SUFFIX}"
+  local backup
+  backup="$(unique_backup_path "$target")"
   log "Backup: $target -> $backup"
   run cp "$target" "$backup"
   if [[ "$DRY_RUN" == "1" ]]; then return 0; fi
@@ -98,4 +110,4 @@ uninstall_cursor() { uninstall_skill_set "$CURSOR_SKILLS_DIR"; move_to_backup "$
 if [[ "$PLATFORM" == "codex" || "$PLATFORM" == "all" ]]; then uninstall_codex; fi
 if [[ "$PLATFORM" == "claude" || "$PLATFORM" == "all" ]]; then uninstall_claude; fi
 if [[ "$PLATFORM" == "cursor" || "$PLATFORM" == "all" ]]; then uninstall_cursor; fi
-log "Doctor Bill uninstall complete. Backups kept with suffix $BACKUP_SUFFIX."
+log "Doctor Bill uninstall complete. Timestamped unique backups were kept."

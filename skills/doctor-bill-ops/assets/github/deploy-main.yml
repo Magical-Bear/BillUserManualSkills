@@ -15,6 +15,7 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     environment: production
     steps:
       - name: Checkout deployment assets
@@ -43,6 +44,7 @@ jobs:
           HEALTH_URL: ${{ vars.HEALTH_URL }}
           HEALTH_ATTEMPTS: ${{ vars.HEALTH_ATTEMPTS }}
           HEALTH_INTERVAL_SECONDS: ${{ vars.HEALTH_INTERVAL_SECONDS }}
+          HEALTH_TIMEOUT_SECONDS: ${{ vars.HEALTH_TIMEOUT_SECONDS }}
           MIGRATION_COMMAND: ${{ vars.MIGRATION_COMMAND }}
         run: |
           set -euo pipefail
@@ -55,7 +57,26 @@ jobs:
           SERVICE_MODE="${SERVICE_MODE:-user}"
           HEALTH_ATTEMPTS="${HEALTH_ATTEMPTS:-12}"
           HEALTH_INTERVAL_SECONDS="${HEALTH_INTERVAL_SECONDS:-5}"
+          HEALTH_TIMEOUT_SECONDS="${HEALTH_TIMEOUT_SECONDS:-5}"
+          [[ "$DEPLOY_PORT" =~ ^[0-9]+$ ]] || { echo "DEPLOY_PORT must be numeric" >&2; exit 2; }
+          [[ "$DEPLOY_USER" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "DEPLOY_USER contains unsafe characters" >&2; exit 2; }
+          [[ "$DEPLOY_HOST" =~ ^[A-Za-z0-9._:-]+$ ]] || { echo "DEPLOY_HOST contains unsafe characters" >&2; exit 2; }
+
+          encode() { printf '%s' "$1" | base64 -w 0; }
+          APP_DIR_B64="$(encode "$APP_DIR")"
+          SERVICE_MODE_B64="$(encode "$SERVICE_MODE")"
+          SERVICE_NAME_B64="$(encode "$SERVICE_NAME")"
+          HEALTH_URL_B64="$(encode "$HEALTH_URL")"
+          HEALTH_ATTEMPTS_B64="$(encode "$HEALTH_ATTEMPTS")"
+          HEALTH_INTERVAL_SECONDS_B64="$(encode "$HEALTH_INTERVAL_SECONDS")"
+          HEALTH_TIMEOUT_SECONDS_B64="$(encode "$HEALTH_TIMEOUT_SECONDS")"
+          MIGRATION_COMMAND_B64="$(encode "${MIGRATION_COMMAND:-}")"
+
           ssh -i ~/.ssh/doctor_bill_deploy -p "$DEPLOY_PORT" \
+            -o BatchMode=yes \
+            -o ConnectTimeout=15 \
+            -o ServerAliveInterval=15 \
+            -o ServerAliveCountMax=3 \
             "$DEPLOY_USER@$DEPLOY_HOST" \
-            "APP_DIR='$APP_DIR' SERVICE_MODE='$SERVICE_MODE' SERVICE_NAME='$SERVICE_NAME' HEALTH_URL='$HEALTH_URL' HEALTH_ATTEMPTS='$HEALTH_ATTEMPTS' HEALTH_INTERVAL_SECONDS='$HEALTH_INTERVAL_SECONDS' MIGRATION_COMMAND='$MIGRATION_COMMAND' bash -s" \
+            "APP_DIR_B64=$APP_DIR_B64 SERVICE_MODE_B64=$SERVICE_MODE_B64 SERVICE_NAME_B64=$SERVICE_NAME_B64 HEALTH_URL_B64=$HEALTH_URL_B64 HEALTH_ATTEMPTS_B64=$HEALTH_ATTEMPTS_B64 HEALTH_INTERVAL_SECONDS_B64=$HEALTH_INTERVAL_SECONDS_B64 HEALTH_TIMEOUT_SECONDS_B64=$HEALTH_TIMEOUT_SECONDS_B64 MIGRATION_COMMAND_B64=$MIGRATION_COMMAND_B64 bash -s" \
             < skills/doctor-bill-ops/assets/deploy/deploy.sh

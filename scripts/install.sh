@@ -9,7 +9,7 @@ CURSOR_HOME="${CURSOR_HOME:-$HOME/.cursor}"
 CURSOR_RULES_DIR="${CURSOR_RULES_DIR:-}"
 CURSOR_SKILLS_DIR="${CURSOR_SKILLS_DIR:-}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BACKUP_SUFFIX="doctor-bill-backup-$(date +%Y%m%d%H%M%S)"
+BACKUP_TAG="doctor-bill-backup"
 SKILLS=(doctor-bill doctor-bill-software doctor-bill-hardware doctor-bill-ai doctor-bill-ops)
 
 usage() {
@@ -37,6 +37,16 @@ USAGE
 }
 
 log() { printf '%s\n' "$*"; }
+unique_backup_path() {
+  local path="$1" stamp candidate counter=0
+  stamp="$(date +%Y%m%d%H%M%S)-$$"
+  candidate="${path}.${BACKUP_TAG}-${stamp}"
+  while [[ -e "$candidate" ]]; do
+    counter=$((counter + 1))
+    candidate="${path}.${BACKUP_TAG}-${stamp}-${counter}"
+  done
+  printf '%s\n' "$candidate"
+}
 run() {
   if [[ "$DRY_RUN" == "1" ]]; then
     printf '[dry-run] %q' "$1"
@@ -69,7 +79,8 @@ CURSOR_SKILLS_DIR="${CURSOR_SKILLS_DIR:-$CURSOR_HOME/skills}"
 copy_dir_with_backup() {
   local src="$1" dest="$2"
   if [[ -e "$dest" ]]; then
-    local backup="${dest}.${BACKUP_SUFFIX}"
+    local backup
+    backup="$(unique_backup_path "$dest")"
     log "Backup: $dest -> $backup"
     run mv "$dest" "$backup"
   fi
@@ -105,7 +116,8 @@ update_marked_block() {
   local end='<!-- DOCTOR-BILL:END -->'
   run mkdir -p "$(dirname "$target")"
   if [[ -e "$target" ]]; then
-    local backup="${target}.${BACKUP_SUFFIX}"
+    local backup
+    backup="$(unique_backup_path "$target")"
     log "Backup: $target -> $backup"
     run cp "$target" "$backup"
   fi
@@ -154,7 +166,8 @@ install_cursor() {
   run mkdir -p "$CURSOR_RULES_DIR"
   local target="$CURSOR_RULES_DIR/doctor-bill.mdc"
   if [[ -e "$target" ]]; then
-    local backup="${target}.${BACKUP_SUFFIX}"
+    local backup
+    backup="$(unique_backup_path "$target")"
     log "Backup: $target -> $backup"
     run mv "$target" "$backup"
   fi

@@ -1,5 +1,17 @@
 # Changelog
 
+## v2.1.1 - 2026-07-13
+
+### Fixed
+
+- Made installer and uninstaller backups collision-safe with timestamp, process ID and a fallback counter.
+- Preserved recoverability of pre-existing Cursor MDC and user-authored Codex/Claude entry content across immediate repeated installs.
+- Restored Node dependencies with `npm ci` after a failed deployment resets to the previous commit.
+- Transported workflow values as Base64 data instead of interpolating unsafe remote-shell string literals.
+- Added noninteractive systemd sudo, workflow timeout, SSH batch/connect/keepalive settings and health timeout forwarding.
+- Replaced hidden rollback failures with per-step status reporting and a `CRITICAL` recovery warning.
+- Added dynamic regression tests for backup safety, dirty-worktree refusal, Node rollback, failed recovery and shell-injection resistance.
+
 ## v2.1.0 - 2026-07-13
 
 ### Fixed
