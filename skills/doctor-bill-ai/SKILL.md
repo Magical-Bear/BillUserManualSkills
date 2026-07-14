@@ -16,13 +16,13 @@ description: Doctor Bill AI 领域 Skill。用于 Dify、RAG、Agent、LangChain
 - Dify 工作流、知识库、工具、应用发布和 API 集成。
 - LangChain 以 Context7 查到的当前稳定 API 为准，不沿用旧版 Agent 创建和中间件接口。
 - LangChain/LangGraph、RAG、Agent、工具调用和结构化输出。
-- FastMCP，默认优先当前官方支持的 HTTP 传输模式并通过 Context7 核对。
+- FastMCP，默认优先当前官方支持的 HTTP 传输模式并通过 Context7 核对，示例导入使用 `from fastmcp import FastMCP`，并以当前官方文档为准。
 - embedding、reranker、向量数据库、索引和检索策略。
 - Hugging Face、PyTorch、ms-swift、SFT/LoRA/QLoRA、数据准备、训练、评估和推理。
 - vLLM 等推理服务、量化、批处理、并发和显存规划。
 - ASR、TTS、图像、多模态和流式交互。
 
-不把某个框架或模型写成绝对选择。先按用户要求、现有架构、当前官方文档、安全和成本选型。
+不把某个框架或模型写成绝对选择。先按用户要求、现有架构、当前官方文档、安全和成本选型，必要时可比较并推荐接入外部 API。
 
 ## 3. AI 需求必须量化
 
@@ -31,7 +31,7 @@ description: Doctor Bill AI 领域 Skill。用于 Dify、RAG、Agent、LangChain
 - 用户任务、成功定义和不允许发生的结果。
 - 输入输出格式、语言、上下文长度和响应方式。
 - 准确率/召回率/引用正确性/结构化输出成功率等指标。
-- 首 token 延迟、总延迟、吞吐、并发和可用性。
+- 首 token 延迟、总延迟、吞吐、自动重试、并发和可用性。
 - 单次、每日和峰值成本预算。
 - 隐私、数据保留、模型供应商和地域限制。
 - 人工审核、拒答、降级和兜底流程。
@@ -110,7 +110,7 @@ description: Doctor Bill AI 领域 Skill。用于 Dify、RAG、Agent、LangChain
 - 工具超时、重试、熔断、并发和预算必须有限制。
 - Agent 循环设置最大步骤、最大时间、最大 token/成本和终止条件。
 - 保存 trace，但脱敏密钥、个人数据和敏感内容。
-- 结构化输出必须做 schema 校验和失败重试/降级，不能只相信模型格式。
+- 结构化输出必须做 schema 校验和失败重试/降级，不能只相信模型格式，可按兼容性评估 `instructor` 等结构化输出工具。
 
 ## 8. Prompt 和模型管理
 
@@ -151,7 +151,7 @@ Linux 自托管场景可优先评估 vLLM，但必须按当前兼容性确认。
 ```text
 唤醒词检测 → 录音 → ASR 转文本
                     ↓
-拍照 → 图像 + 文本 → Dify/Agent → 流式返回
+拍照 → 图像 + 文本 → Dify/LangChain/Agent → 流式返回
                     ↓
               流式解析 → TTS 播放
 ```
@@ -163,7 +163,7 @@ Linux 自托管场景可优先评估 vLLM，但必须按当前兼容性确认。
 例如：
 
 ```text
-唤醒词 → ASR → 图像/文本理解 → Dify/Agent → 流式响应 → TTS
+唤醒词 → ASR → 图像/文本理解 → Dify/LangChain/Agent → 流式响应 → TTS
 ```
 
 必须分别定义：

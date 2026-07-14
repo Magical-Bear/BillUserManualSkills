@@ -71,7 +71,7 @@ def main() -> int:
         "UI → 消费/聚合 → API → 数据库 → 桥梁层 → 生产端",
     ], errors)
     require(ROOT / "skills/doctor-bill-software/SKILL.md", [
-        "FastAPI", "aiohttp", "psycopg 3", "Taskiq", "FastMCP", "SQLAlchemy 2.x ORM",
+        "FastAPI", "aiohttp", "psycopg 3", "asyncmy", "Taskiq", "FastMCP", "SQLAlchemy 2.x ORM",
         "async_sessionmaker", "AsyncSession", "lifespan", "现有 MySQL",
         "开发数据库与测试数据库必须", "第三范式", "3 分钟", "20 个样本",
         "aggregation_version", "原始数据", "向后兼容", ".env.example",
@@ -80,12 +80,13 @@ def main() -> int:
     require(ROOT / "skills/doctor-bill-hardware/SKILL.md", [
         "ESP32", "STM32", "UART", "I²C", "SPI", "CAN", "RS-485",
         "MQTT", "protocol_version", "sequence_no", "离线缓存", "原始 payload",
-        "开发/测试库隔离", "OTA", "回滚",
+        "开发/测试库隔离", "正点原子", "标准外设库（SPL）", "MQTTX", "OTA", "回滚",
     ], errors)
     require(ROOT / "skills/doctor-bill-ai/SKILL.md", [
         "Dify", "LangChain/LangGraph", "FastMCP", "RAG", "embedding model/version",
         "prompt version", "model/provider version", "SQLAlchemy async ORM",
-        "开发/测试库分离", "vLLM", "prompt injection", "真实 E2E",
+        "开发/测试库分离", "vLLM", "from fastmcp import FastMCP", "instructor", "外部 API",
+        "prompt injection", "真实 E2E",
     ], errors)
     require(ROOT / "skills/doctor-bill-ops/SKILL.md", [
         "systemctl --user", "enable-linger", "StartLimitIntervalSec", "StartLimitBurst",

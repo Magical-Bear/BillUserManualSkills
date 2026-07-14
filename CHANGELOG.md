@@ -9,6 +9,7 @@
 - Classified those traits as defaults below explicit user requirements, existing project constraints, and current official compatibility/security requirements.
 - Clarified that modern does not mean blindly newest, async is not mandatory everywhere, and performance cannot override correctness, security or maintainability.
 - Added source, installation, regression and behavior-contract checks that reject stale persona artifacts and preserve the preference hierarchy.
+- Normalized domain defaults for `asyncmy`, STM32 正点原子/SPL compatibility, MQTTX, external AI APIs, `instructor`, and the `FastMCP` import form.
 
 ## v2.1.1 - 2026-07-13
 
